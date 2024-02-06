@@ -60,7 +60,7 @@ void SHEventHelper::setup(const edm::ParameterSet& conf,edm::ConsumesCollector &
 
   isMC_=datasetCode_!=0;
   branches_.setup(conf);
-  if(branches_.addHLTDebug) cc.consumesMany<reco::RecoEcalCandidateIsolationMap>();
+  //if(branches_.addHLTDebug) cc.consumesMany<reco::RecoEcalCandidateIsolationMap>();
   
 }
 

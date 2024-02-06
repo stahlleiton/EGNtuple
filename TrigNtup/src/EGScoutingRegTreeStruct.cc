@@ -131,20 +131,20 @@ void ScoutShowerShapeStruct::fill(const int seedId,const std::vector<unsigned in
   
 }
       
-{
+namespace {
   
   float safeDivide(float numer,float denom,float zeroVal=0. ){
     return denom!=0 ? numer / denom : zeroVal;
   }
   float ptToP(float pt,float eta){
-    return safeDivide(pt,std::sin(MathFuncs::etaToTheta(eta),0));
+    return safeDivide(pt,std::sin(MathFuncs::etaToTheta(eta)),0);
   }
   int getBestTrkIndx(const Run3ScoutingElectron& ele,int maxTrks=ScoutEleStruct::kMaxTracks){
 
     int bestIndx = 0;
     float bestAbsEPM1 = 999;
     float eleEnergy = ptToP(ele.pt(),ele.eta());
-    for(size_t trkNr=0;trkNr<ele.trkpt().size() && trkNr<maxTrks;trkNr++){
+    for(size_t trkNr=0;trkNr<ele.trkpt().size() && int(trkNr)<maxTrks;trkNr++){
       if(ele.trkpt()[trkNr]==0){
 	continue;
       }
