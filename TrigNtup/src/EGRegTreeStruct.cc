@@ -92,14 +92,14 @@ void EGRegTreeStruct::fill(const edm::Event& event,int iNrVert,float iRho,float 
   nrVert = iNrVert;
   rho = iRho;
   nrPUInt = iNrPUInt;
-  nrPUIntTrue = iNrPUIntTrue;
+  nrPUIntTrue = iNrPUIntTrue;  
   evt.fill(event);
-  if(iSC){
+  if(iSC){    
     sc.fill(*iSC,ecalChanStatus,scAlt);
     ssFull.fill<true>(*iSC->seed(),ecalHitsEB,ecalHitsEE,topo);
     ssFrac.fill<false>(*iSC->seed(),ecalHitsEB,ecalHitsEE,topo);
     auto fillClus = [&iSC](ClustStruct& clus,size_t index){
-      if(index<static_cast<size_t>(iSC->clusters().size())){
+      if(index<static_cast<size_t>(iSC->clusters().size()) && iSC->clusters().isAvailable()){
 	auto iClus = iSC->clusters()[index];
       clus.fill( iClus->energy(),
 		 iClus->eta()-iSC->seed()->eta(),
@@ -186,7 +186,6 @@ void SuperClustStruct::fill(const reco::SuperCluster& sc,const EcalChannelStatus
   dEtaSeedSC = seedClus.eta() - sc.position().Eta(); //needs this way due to rounding errors
   numberOfClusters = sc.clusters().size();
   numberOfSubClusters = std::max(0,static_cast<int>(sc.clusters().size())-1);
-
   if(isEB){
     EBDetId ebDetId(seedClus.seed());
     iEtaOrX = ebDetId.ieta();
@@ -225,15 +224,17 @@ void SuperClustStruct::fill(const reco::SuperCluster& sc,const EcalChannelStatus
   clusterMaxDRRawEnergy = 0.;
 
   float maxDR2 = 0;
-  for(auto& clus : sc.clusters()){
-    if(clus == sc.seed()) continue;
-    float dR2 = reco::deltaR2(seedEta,seedPhi,clus->eta(),clus->phi());
-    if(dR2 > maxDR2 ){
-      maxDR2 = dR2;
-      clusterMaxDR = std::sqrt(dR2);
-      clusterMaxDRDPhi = reco::deltaPhi(clus->phi(),seedPhi);
-      clusterMaxDRDEta = clus->eta()-seedEta;
-      clusterMaxDRRawEnergy = clus->energy();
+  if (sc.clusters().isAvailable()){  
+    for(auto& clus : sc.clusters()){      
+      if(clus == sc.seed()) continue;
+      float dR2 = reco::deltaR2(seedEta,seedPhi,clus->eta(),clus->phi());
+      if(dR2 > maxDR2 ){
+        maxDR2 = dR2;
+        clusterMaxDR = std::sqrt(dR2);
+        clusterMaxDRDPhi = reco::deltaPhi(clus->phi(),seedPhi);
+        clusterMaxDRDEta = clus->eta()-seedEta;
+        clusterMaxDRRawEnergy = clus->energy();
+      }
     }
   }
   if(altSC){

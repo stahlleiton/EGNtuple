@@ -259,7 +259,6 @@ void EGRegTreeMaker::analyze(const edm::Event& iEvent,const edm::EventSetup& iSe
 	const std::vector<const reco::GsfElectron*> altEles = matchToAltCollsBySCSeedId(ele,eleAltHandles);
 	const std::vector<const reco::Photon*> altPhos = matchToAltCollsBySCSeedId(pho,phoAltHandles);
 
-
 	egRegTreeData_.fill(iEvent,nrVert,*rhoHandle,nrPUInt,nrPUIntTrue,
 			    *ecalHitsEBHandle,*ecalHitsEEHandle,
 			    *caloTopoHandle,
