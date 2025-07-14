@@ -123,7 +123,10 @@ void SHGeomFiller::fillHcalGeomEndcap(SHCaloGeom& hcalGeom)
 void SHGeomFiller::getCellPosition(const DetId &detId,TVector3 &pos)
 {
   const CaloSubdetectorGeometry* subDetGeom =  calGeometry_->getSubdetectorGeometry(detId);
-  std::shared_ptr<const CaloCellGeometry> cellGeom = subDetGeom!=nullptr ? subDetGeom->getGeometry(detId) : std::shared_ptr<const CaloCellGeometry>();
+  if(subDetGeom==nullptr){
+    return;
+  }
+  auto cellGeom = subDetGeom->getGeometry(detId);
   if(cellGeom!=nullptr){
     const GlobalPoint &gpPos =cellGeom->getPosition();
     pos.SetXYZ(gpPos.x(),gpPos.y(),gpPos.z());
@@ -137,7 +140,10 @@ void SHGeomFiller::getCellPosition(const DetId &detId,TVector3 &pos)
 void SHGeomFiller::getCellEdges(const DetId& detId,SHCaloCellGeom::CellEdges& frontEdges,SHCaloCellGeom::CellEdges& rearEdges)
 {
   const CaloSubdetectorGeometry* subDetGeom =  calGeometry_->getSubdetectorGeometry(detId);
-  std::shared_ptr<const CaloCellGeometry> cellGeom = subDetGeom!=nullptr ? subDetGeom->getGeometry(detId) : std::shared_ptr<const CaloCellGeometry>();
+  if(subDetGeom==nullptr){
+    return;
+  }
+  auto cellGeom = subDetGeom->getGeometry(detId);
   if(cellGeom!=nullptr){
     const EZArrayFL<GlobalPoint>& corners = cellGeom->getCorners();
     if(corners[0].eta()==corners[2].eta() || corners[0].phi()==corners[2].phi()) edm::LogInfo("SHGeomFiller") <<"getCellEdges: Warning corner structure has changed, edges will be incorrectly filled";
@@ -169,7 +175,10 @@ void SHGeomFiller::getCellEdges(const DetId& detId,SHCaloCellGeom::CellEdges& fr
 void SHGeomFiller::getCellCorners(const DetId& detId,std::vector<TVector3>& cornerVec)
 {
   const CaloSubdetectorGeometry* subDetGeom =  calGeometry_->getSubdetectorGeometry(detId);
-  std::shared_ptr<const CaloCellGeometry> cellGeom = subDetGeom!=nullptr ? subDetGeom->getGeometry(detId) : std::shared_ptr<const CaloCellGeometry>();
+  if(subDetGeom==nullptr){
+    return;
+  }
+  auto cellGeom = subDetGeom->getGeometry(detId);
   if(subDetGeom==nullptr) LogErr<<" null sub det geom for id "<<detId.det()<<" "<<detId.subdetId()<<" detId "<<detId.rawId()<<std::endl;
   if(cellGeom!=nullptr){
     const EZArrayFL<GlobalPoint>& cmsswCorners = cellGeom->getCorners();

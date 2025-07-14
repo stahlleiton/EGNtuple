@@ -312,7 +312,7 @@ void SHTrigSumMaker::addL1Menu_(const HLTConfigProvider& hltConfig,
 
   std::vector<double> defaultPSes(hltConfig.prescaleSize(),1);
   for(size_t bitNr=0;bitNr<l1GtUtils.decisionsFinal().size();bitNr++){
-    const std::string& l1Name = l1GtUtils.decisionsFinal()[bitNr].first;
+    const std::string l1Name(l1GtUtils.decisionsFinal()[bitNr].first);
     seeds.emplace_back(SHL1Menu::Seed(bitNr,l1Name,defaultPSes,false));
   }
   SHL1Menu l1Menu;
