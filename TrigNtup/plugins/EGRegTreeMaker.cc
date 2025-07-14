@@ -50,8 +50,8 @@ private:
   std::vector<edm::EDGetTokenT<reco::SuperClusterCollection>> scAltTokens_;
   edm::EDGetTokenT<EcalRecHitCollection> ecalHitsEBToken_;
   edm::EDGetTokenT<EcalRecHitCollection> ecalHitsEEToken_;
-  edm::EDGetTokenT<std::vector<reco::GsfElectron> > elesToken_;
-  edm::EDGetTokenT<std::vector<reco::Photon> > phosToken_;
+  edm::EDGetTokenT<edm::View<reco::GsfElectron> > elesToken_;
+  edm::EDGetTokenT<edm::View<reco::Photon> > phosToken_;
   edm::EDGetTokenT<std::vector<PileupSummaryInfo> > puSumToken_;
 
   std::vector<edm::EDGetTokenT<std::vector<reco::GsfElectron> > > eleAltTokens_;
@@ -163,22 +163,24 @@ namespace{
     else if(!sc.clusters().isAvailable()) return false;
     else return true;
   }
-  template<typename T> 
-  const T* matchBySCSeedId(unsigned int seedId,const std::vector<T>& objs){
+  template<typename T,template<typename...> class C=std::vector >
+  const T* matchBySCSeedId(unsigned int seedId,const C<T>& objs){
     for(auto& obj : objs){
       if(obj.superCluster()->seed()->seed().rawId()==seedId) return &obj;
     }
     return nullptr;
   }
-  const reco::GsfElectron* matchEle(unsigned int seedId,const std::vector<reco::GsfElectron>& eles){
-    return matchBySCSeedId(seedId,eles);
+  template<typename T, template<typename...> class CollType=std::vector >
+  const T* matchEle(unsigned int seedId,const CollType<T>& eles){
+    return matchBySCSeedId<T,CollType>(seedId,eles);
   }
-  const reco::Photon* matchPho(unsigned int seedId,const std::vector<reco::Photon>& phos){
-    return matchBySCSeedId(seedId,phos);
+  template<typename T,template<typename...> class CollType=std::vector>
+  const T* matchPho(unsigned int seedId,const CollType<T>& phos){
+    return matchBySCSeedId<T,CollType>(seedId,phos);
   }
   
-  template<typename T> std::vector<const T*> 
-  matchToAltCollsBySCSeedId(const T* objToMatch,const std::vector<edm::Handle<std::vector<T> > >& objCollHandles){
+  template<typename T, template<typename...> class C=std::vector> std::vector<const T*> 
+  matchToAltCollsBySCSeedId(const T* objToMatch,const std::vector<edm::Handle<C<T> > >& objCollHandles){
     std::vector<const T*> matches;
     if(objToMatch){
       unsigned int seedId = objToMatch->superCluster()->seed()->seed().rawId();
