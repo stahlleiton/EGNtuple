@@ -45,6 +45,9 @@ private:
 
   edm::EDGetTokenT<reco::VertexCollection>  verticesToken_;
   edm::EDGetTokenT<double> rhoToken_;
+  edm::EDGetTokenT<int> centralityToken_;
+  edm::EDGetTokenT<std::vector<double>> etaMapToken_;
+  edm::EDGetTokenT<std::vector<double>> rhoMapToken_;
   edm::EDGetTokenT<reco::GenParticleCollection> genPartsToken_;
   std::vector<edm::EDGetTokenT<reco::SuperClusterCollection>> scTokens_;
   std::vector<edm::EDGetTokenT<reco::SuperClusterCollection>> scAltTokens_;
@@ -59,7 +62,6 @@ private:
 
   edm::ESGetToken<CaloTopology,CaloTopologyRecord> caloTopoToken_;
   edm::ESGetToken<EcalChannelStatus,EcalChannelStatusRcd> chanStatusToken_;
-  
   
   EGRegTreeMaker(const EGRegTreeMaker& rhs)=delete;
   EGRegTreeMaker& operator=(const EGRegTreeMaker& rhs)=delete;
@@ -112,6 +114,11 @@ EGRegTreeMaker::EGRegTreeMaker(const edm::ParameterSet& iPara):
   setToken(puSumToken_,iPara,"puSumTag");
   setToken(eleAltTokens_,iPara,"elesAltTag");
   setToken(phoAltTokens_,iPara,"phosAltTag");
+  if (iPara.exists("centTag")){
+    setToken(centralityToken_,iPara,"centTag");
+    setToken(etaMapToken_,iPara,"etaMapTag");
+    setToken(rhoMapToken_,iPara,"rhoMapTag");
+  }
 
 }
 
@@ -225,6 +232,14 @@ void EGRegTreeMaker::analyze(const edm::Event& iEvent,const edm::EventSetup& iSe
       }
     }
   }
+  // set heavy ion information
+  if (not centralityToken_.isUninitialized()){
+    auto centHandle = getHandle(iEvent,centralityToken_);
+    auto etaMapHandle = getHandle(iEvent,etaMapToken_);
+    auto rhoMapHandle = getHandle(iEvent,rhoMapToken_);
+    if (centHandle.isValid() && etaMapHandle.isValid() && rhoMapHandle.isValid())
+      egRegTreeData_.setHiInfo(*centHandle,*etaMapHandle,*rhoMapHandle);
+  }
 
   bool fillFromSC = false;
   if(fillFromSC){
@@ -245,6 +260,7 @@ void EGRegTreeMaker::analyze(const edm::Event& iEvent,const edm::EventSetup& iSe
 			      *chanStatusHandle,
 			      &sc,genPart,ele,pho,scAlt,
 			      altEles,altPhos);
+      egRegTreeData_.fillHiInfo(&sc,ele,pho);
 	  egRegTree_->Fill();
 	}
       }
@@ -267,6 +283,7 @@ void EGRegTreeMaker::analyze(const edm::Event& iEvent,const edm::EventSetup& iSe
 			    *chanStatusHandle,
 			    sc,&genPart,ele,pho,scAlt,
 			    altEles,altPhos);
+    egRegTreeData_.fillHiInfo(sc,ele,pho);
 	egRegTree_->Fill();
       }
     }

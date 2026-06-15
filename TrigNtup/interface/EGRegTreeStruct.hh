@@ -36,6 +36,27 @@ struct ClustStruct {
   }
 };
 
+struct HeavyIonStruct {
+  float centrality=100,scRho=0,eleRho=0,phoRho=0;
+  std::vector<double> etaMap,rhoMap;
+  static std::string contents(){return "centrality/F:scRho:eleRho:phoRho";}
+  void clear(){centrality=100;etaMap.clear();rhoMap.clear();scRho=eleRho=phoRho=0.;}
+  void fill(float hiBin,const std::vector<double>& etaM,const std::vector<double>& rhoM){
+	centrality = hiBin / 2.;
+	etaMap = etaM;
+	rhoMap = rhoM;
+  }
+  double getRho(double eta){
+    const size_t n = std::upper_bound(etaMap.begin(), etaMap.end(), eta) - etaMap.begin();
+    return (n > 0 && n <= rhoMap.size()) ? rhoMap[n - 1] : 0.;
+  }
+  void fill(const reco::SuperCluster* sc,const reco::GsfElectron* ele,const reco::Photon* pho){
+    scRho = sc ? getRho(sc->eta()) : 0.;
+    eleRho = ele ? getRho(ele->superCluster()->eta()) : 0.;
+    phoRho = pho ? getRho(pho->superCluster()->eta()) : 0.;
+  }
+};
+
 struct EleStruct {
   float et,energy,energyErr,ecalEnergy,ecalEnergyErr,eta,phi,trkEtaMode,trkPhiMode,trkPMode,trkPModeErr,fbrem,corrMean,corrSigma,hademTow,hademCone,trkPInn,trkPtInn,trkPVtx,trkPOut,trkChi2,trkNDof,ecalDrivenSeed,nrSatCrys,scRawEnergy,scRawESEnergy;
   static std::string contents(){return "et/F:energy:energyErr:ecalEnergy:ecalEnergyErr:eta:phi:trkEtaMode:trkPhiMode:trkPMode:trkPModeErr:fbrem:corrMean:corrSigma:hademTow:hademCone:trkPInn:trkPtInn:trkPVtx:trkPOut:trkChi2:trkNDof:ecalDrivenSeed:nrSatCrys:scRawEnergy:scRawESEnergy";}
@@ -78,10 +99,10 @@ struct SuperClustStruct {
 };
 
 struct ShowerShapeStruct {
-  float e3x3,e5x5,seedClusEnergy,eMax,e2nd,eLeftRightDiffSumRatio,eTopBottomDiffSumRatio,sigmaIEtaIEta,sigmaIEtaIPhi,sigmaIPhiIPhi,e2x5Max,e2x5Top,e2x5Bottom,e2x5Left,e2x5Right,eTop,eBottom,eLeft,eRight;
-  static std::string contents(){return "e3x3:e5x5:seedClusEnergy:eMax:e2nd:eLeftRightDiffSumRatio:eTopBottomDiffSumRatio:sigmaIEtaIEta:sigmaIEtaIPhi:sigmaIPhiIPhi:e2x5Max:e2x5Top:e2x5Bottom:e2x5Left:e2x5Right:eTop:eBottom:eLeft:eRight";}
+  float e3x3,e5x5,e5x5Inv,seedClusEnergy,eMax,e2nd,eLeftRightDiffSumRatio,eTopBottomDiffSumRatio,sigmaIEtaIEta,sigmaIEtaIPhi,sigmaIPhiIPhi,e2x5Max,e2x5Top,e2x5Bottom,e2x5Left,e2x5Right,eTop,eBottom,eLeft,eRight;
+  static std::string contents(){return "e3x3:e5x5:e5x5Inv:seedClusEnergy:eMax:e2nd:eLeftRightDiffSumRatio:eTopBottomDiffSumRatio:sigmaIEtaIEta:sigmaIEtaIPhi:sigmaIPhiIPhi:e2x5Max:e2x5Top:e2x5Bottom:e2x5Left:e2x5Right:eTop:eBottom:eLeft:eRight";}
   void clear(){
-    e3x3=e5x5=seedClusEnergy=eMax=e2nd=eLeftRightDiffSumRatio=eTopBottomDiffSumRatio=sigmaIEtaIEta=sigmaIEtaIPhi=sigmaIPhiIPhi=e2x5Max=e2x5Top=e2x5Bottom=e2x5Left=e2x5Right=eTop=eBottom=eLeft=eRight=0.;
+    e3x3=e5x5=e5x5Inv=seedClusEnergy=eMax=e2nd=eLeftRightDiffSumRatio=eTopBottomDiffSumRatio=sigmaIEtaIEta=sigmaIEtaIPhi=sigmaIPhiIPhi=e2x5Max=e2x5Top=e2x5Bottom=e2x5Left=e2x5Right=eTop=eBottom=eLeft=eRight=0.;
   }
   template<bool full5x5>
   void fill(const reco::CaloCluster& clus,const EcalRecHitCollection& ecalHitsEB,const EcalRecHitCollection& ecalHitsEE,const CaloTopology& topo);  
@@ -115,6 +136,8 @@ struct EGRegTreeStruct {
   ShowerShapeStruct ssFrac;
   EleStruct ele;
   PhoStruct pho;
+  SuperClustStruct eleSC;
+  SuperClustStruct phoSC;
   ShowerShapeStruct eleSSFull;
   ShowerShapeStruct phoSSFull;
   GenInfoStruct mc;
@@ -123,9 +146,17 @@ struct EGRegTreeStruct {
   ClustStruct clus3;
   std::vector<EleEnergyStruct> eleEnergies;
   std::vector<PhoEnergyStruct> phoEnergies;
+  HeavyIonStruct hiInfo;
 
   void setNrEnergies(unsigned int nrEleEnergies,unsigned int nrPhoEnergies){
     eleEnergies.resize(nrEleEnergies);phoEnergies.resize(nrPhoEnergies);
+  }
+  void setHiInfo(float hiBin,const std::vector<double>& etaMap,const std::vector<double>& rhoMap){
+	hiInfo.clear();
+	hiInfo.fill(hiBin,etaMap,rhoMap);
+  }
+  void fillHiInfo(const reco::SuperCluster* iSC,const reco::GsfElectron* iEle,const reco::Photon* iPho){
+    hiInfo.fill(iSC,iEle,iPho);
   }
   void createBranches(TTree* tree);
   void setBranchAddresses(TTree* tree);
@@ -141,6 +172,8 @@ struct EGRegTreeStruct {
     ssFrac.clear();
     ele.clear();
     pho.clear();
+    eleSC.clear();
+    phoSC.clear();
     eleSSFull.clear();
     phoSSFull.clear();
     mc.clear();
@@ -161,6 +194,7 @@ void ShowerShapeStruct::fill(const reco::CaloCluster& clus,const EcalRecHitColle
 
   e3x3 = EcalClusterToolsT<full5x5>::e3x3(clus,&ecalHits,&topo);
   e5x5 = EcalClusterToolsT<full5x5>::e5x5(clus,&ecalHits,&topo);
+  e5x5Inv = e5x5 != 0. ? 1./e5x5 : 0.;
   eMax = EcalClusterToolsT<full5x5>::eMax(clus,&ecalHits);
   e2nd = EcalClusterToolsT<full5x5>::e2nd(clus,&ecalHits);
   eLeft = EcalClusterToolsT<full5x5>::eLeft(clus,&ecalHits,&topo);

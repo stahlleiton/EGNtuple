@@ -8,7 +8,7 @@
 #include<fstream>
 
 #include <functional>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <algorithm>
 #include <sstream>
 
@@ -1092,7 +1092,7 @@ void DetIdTools::fillEEToTowerIdMap(const std::string& filename)
     }
   }//empty file name check
   //  std::cout <<"end of the menu "<<std::endl;
-  std::sort(eeDetIdToTowerId_.begin(),eeDetIdToTowerId_.end(),boost::bind( std::less<int>(),boost::bind(&std::pair<int,int>::first,_1),boost::bind(&std::pair<int,int>::first,_2)));
+  std::sort(eeDetIdToTowerId_.begin(),eeDetIdToTowerId_.end(),boost::bind( std::less<int>(),boost::bind(&std::pair<int,int>::first,boost::placeholders::_1),boost::bind(&std::pair<int,int>::first,boost::placeholders::_2)));
 
   //std::cout <<"here "<<std::endl;
   //for(size_t i=0;i<eeDetIdToTowerId_.size();i++){

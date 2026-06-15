@@ -1,6 +1,7 @@
 <export>
 </export>
-<library   name="SHarperTrigNtup_plugins" file="TrigNtupMaker.cc,EGRegTreeMaker.cc,EcalClusIsoTreeMaker.cc,EGScoutingRegTreeMaker.cc">
+<library   name="SHarperTrigNtup_plugins" file="TrigNtupMaker.cc,EGRegTreeMaker.cc,EcalClusIsoTreeMaker.cc,EGScoutingRegTreeMaker.cc,HICentralityBinProducer.cc">
   <use   name="SHarper/TrigNtup"/>
   <use   name="SHarper/HEEPAnalyzer"/>
+  <use   name="DataFormats/HeavyIonEvent"/>
 </library>

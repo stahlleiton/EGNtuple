@@ -21,6 +21,8 @@ void EGRegTreeStruct::createBranches(TTree* tree)
   tree->Branch("ssFrac",&ssFrac,ssFrac.contents().c_str());
   tree->Branch("ele",&ele,ele.contents().c_str());
   tree->Branch("pho",&pho,pho.contents().c_str());
+  tree->Branch("eleSC",&eleSC,eleSC.contents().c_str());
+  tree->Branch("phoSC",&phoSC,phoSC.contents().c_str());
   tree->Branch("eleSSFull",&eleSSFull,eleSSFull.contents().c_str());
   tree->Branch("phoSSFull",&phoSSFull,phoSSFull.contents().c_str());  
   tree->Branch("mc",&mc,mc.contents().c_str());
@@ -35,6 +37,7 @@ void EGRegTreeStruct::createBranches(TTree* tree)
     std::string name = "phoAltEnergy"+std::to_string(phoNr+1);
     tree->Branch(name.c_str(),&phoEnergies[phoNr],phoEnergies[phoNr].contents().c_str());
   }
+  tree->Branch("hi",&hiInfo,hiInfo.contents().c_str());
 }
 
 void EGRegTreeStruct::setBranchAddresses(TTree* tree)
@@ -49,6 +52,8 @@ void EGRegTreeStruct::setBranchAddresses(TTree* tree)
   tree->SetBranchAddress("ssFrac",&ssFrac);
   tree->SetBranchAddress("ele",&ele);
   tree->SetBranchAddress("pho",&pho);
+  tree->SetBranchAddress("eleSC",&eleSC);
+  tree->SetBranchAddress("phoSC",&phoSC);
   tree->SetBranchAddress("eleSSFull",&eleSSFull);
   tree->SetBranchAddress("phoSSFull",&phoSSFull);
   tree->SetBranchAddress("mc",&mc);
@@ -63,6 +68,7 @@ void EGRegTreeStruct::setBranchAddresses(TTree* tree)
     std::string name = "phoAltEnergy"+std::to_string(phoNr+1);
     tree->SetBranchAddress(name.c_str(),&phoEnergies[phoNr]);
   }
+  tree->SetBranchAddress("hi",&hiInfo);
   
 }
 
@@ -115,10 +121,12 @@ void EGRegTreeStruct::fill(const edm::Event& event,int iNrVert,float iRho,float 
   if(iMC) mc.fill(*iMC, iSC ? std::sqrt(reco::deltaR2(iSC->eta(),iSC->phi(),iMC->eta(),iMC->phi())) : 999);
   if(iEle){
     ele.fill(*iEle);
+    eleSC.fill(*iEle->superCluster(),ecalChanStatus,nullptr);
     eleSSFull.fill(iEle->full5x5_showerShape(),*iEle);
   }
   if(iPho){ 
     pho.fill(*iPho);
+    phoSC.fill(*iPho->superCluster(),ecalChanStatus,nullptr);
     phoSSFull.fill(iPho->full5x5_showerShapeVariables());
   }
   if(altEles.size() != eleEnergies.size()){
@@ -184,7 +192,7 @@ void SuperClustStruct::fill(const reco::SuperCluster& sc,const EcalChannelStatus
   seedSinTheta = divideWithZeroCheck(seedClus.position().rho(),seedClus.position().r());
   dPhiSeedSC = reco::deltaPhi(seedClus.phi(),sc.position().Phi()); //needs this way due to rounding errors
   dEtaSeedSC = seedClus.eta() - sc.position().Eta(); //needs this way due to rounding errors
-  numberOfClusters = sc.clusters().size();
+  numberOfClusters = std::max(0,static_cast<int>(sc.clusters().size()));
   numberOfSubClusters = std::max(0,static_cast<int>(sc.clusters().size())-1);
   if(isEB){
     EBDetId ebDetId(seedClus.seed());
@@ -271,7 +279,7 @@ void EleStruct::fill(const reco::GsfElectron& ele)
   fbrem = ele.fbrem();
   corrMean = 1.;
   corrSigma = 0.;
-  hademTow = ele.hcalOverEcalBc();
+  hademTow = ele.full5x5_hcalOverEcalBc();
   hademCone = ele.hcalOverEcal();
   ecalDrivenSeed = ele.ecalDrivenSeed();
   nrSatCrys = ele.nSaturatedXtals();
@@ -299,6 +307,7 @@ void ShowerShapeStruct::fill(const reco::GsfElectron::ShowerShape& eleSS,const r
 {
   e3x3 = eleSS.r9*ele.superCluster()->rawEnergy();
   e5x5 = eleSS.e5x5;
+  e5x5Inv = e5x5 != 0. ? 1./e5x5 : 0.;
   eMax = eleSS.eMax;
   e2nd = eleSS.e2nd;
   eLeft = eleSS.eLeft;
@@ -325,6 +334,7 @@ void ShowerShapeStruct::fill(const reco::Photon::ShowerShape& phoSS)
 {
   e3x3 = phoSS.e3x3;
   e5x5 = phoSS.e5x5;
+  e5x5Inv = e5x5 != 0. ? 1./e5x5 : 0.;
   eMax = phoSS.maxEnergyXtal;
   e2nd = phoSS.e2nd;
   eLeft = phoSS.eLeft;
